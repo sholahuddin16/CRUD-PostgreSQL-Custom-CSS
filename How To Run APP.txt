@@ -1,0 +1,26 @@
+How to Run Web APP
+
+1. With Simple CSS
+A. Back-End
+- Change folder to Back-End = cd Back-End
+- Instal all package backend = npm install
+- install nodemod = npm install nodemon
+- chage origin corsOption = "http://localhost/3000" or "http://ipaddress/3000"
+- Run Back-End App = nodemon start server.js 
+
+B. Front-end
+- Change folder to Front-End = cd Front-End
+- Instal all package backend = npm install
+- Run Front-End App = npm start
+
+2. With Custom Card CSS
+- Change folder to Back-End = cd Back-End
+- Instal all package backend = npm install
+- install nodemod = npm install nodemon
+- chage origin corsOption = "http://localhost/3006" or "http://ipaddress/3006"
+- Run Back-End App = nodemon start server.js 
+
+B. Front-end
+- Change folder to Front-End = cd front-end-Custom-CSS/Blog-App-MERN-Template/
+- Instal all package backend = npm install
+- Run Front-End App = npm start

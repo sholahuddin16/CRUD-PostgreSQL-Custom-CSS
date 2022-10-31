@@ -1,0 +1,121 @@
+Front-end ReactJS PostgreSQL Crud
+
+1. install ReactJS
+npx create-react-app fron-end
+
+2. buat struktur folder
+
+3. install bootstrap
+npm i bootstrap
+
+4. import bootstrap ke front-end/src/app
+import React, { Component } from 'react'
+
+import "bootstrap/dist/css/bootstrap.min.css";
+class App extends Component {
+  render (
+    
+  )
+}
+
+export default App;
+
+5. tambah React Router di appa src/index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter } from "react-router-dom";
+import App from './App';
+import * as serviceWorker from "./serviceWorker";
+
+ReactDOM.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+  document.getElementById('root')
+);
+serviceWorker.unregister();
+
+6. Buat navbar di src/app.js
+import React, { Component } from 'react'
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Link, Route, Switch } from 'react-router-dom';
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <nav className="navbar navbar-expand navbar-dark bg-dark">
+          <a href="/tutorials" className="navbar-brand">
+
+          </a>
+          <div className="navbar-nav mr-auto">
+            <li className="nav-item">
+              <Link to={"/tutorials"} className="nav-link">
+                Tutorials
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to={"/add"} className="nav-link">
+                Add
+              </Link>
+            </li>
+          </div>
+        </nav>
+        <div className="container mt-3">
+          <Switch>
+            <Route exact path={["/", "/tutorials"]} component={""} />
+            <Route exact path="/add" component={""} />
+            <Route path="/tutorials/:id" component={""} />
+          </Switch>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default App;
+
+7. inisialisasi axios untuk React Crud HTTP Client di http-common.js
+
+install axios terlebih dahulu
+npm i axios
+
+import axios from "axios";
+export default axios.create({
+    baseURL: "http://localhost:8080/api",
+    headers: {
+        "Content-type": "application/json"
+    }
+});
+
+8. create data service di services/tutorial.service.js
+import http from "../http-common";
+
+class TutorialDataService {
+    getAll() {
+        return http.get("/tutorials");
+    }
+    get(id) {
+        return http.get(`/tutorials/${id}`);
+    }
+    create(data) {
+        return http.post("/tutrials", data);
+    }
+    update(id, data) {
+        return http.put(`/tutorials/${id}`, data);
+    }
+    delete(id) {
+        return http.delete(`/tutorials/${id}`);
+    }
+    deleteAll() {
+        return http.delete("/tutorials");
+    }
+    findByTitle(title) {
+        return http.get(`/tutorials?title=${title}`);
+    }
+}
+
+export default new TutorialDataService();
+
+9. lanjut dicatatan ke 2
+

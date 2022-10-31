@@ -1,0 +1,640 @@
+Front-end ReactJS PostgreSQL Crud
+
+1. install ReactJS
+npx create-react-app fron-end
+
+2. buat struktur folder
+
+3. install bootstrap
+npm i bootstrap
+
+4. import bootstrap ke front-end/src/app
+import React, { Component } from 'react'
+
+import "bootstrap/dist/css/bootstrap.min.css";
+class App extends Component {
+  render (
+    
+  )
+}
+
+export default App;
+
+5. tambah React Router di appa src/index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter } from "react-router-dom";
+import App from './App';
+import * as serviceWorker from "./serviceWorker";
+
+ReactDOM.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+  document.getElementById('root')
+);
+serviceWorker.unregister();
+
+6. Buat navbar di src/app.js
+import React, { Component } from 'react'
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Link, Route, Switch } from 'react-router-dom';
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <nav className="navbar navbar-expand navbar-dark bg-dark">
+          <a href="/tutorials" className="navbar-brand">
+
+          </a>
+          <div className="navbar-nav mr-auto">
+            <li className="nav-item">
+              <Link to={"/tutorials"} className="nav-link">
+                Tutorials
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to={"/add"} className="nav-link">
+                Add
+              </Link>
+            </li>
+          </div>
+        </nav>
+        <div className="container mt-3">
+          <Switch>
+            <Route exact path={["/", "/tutorials"]} component={""} />
+            <Route exact path="/add" component={""} />
+            <Route path="/tutorials/:id" component={""} />
+          </Switch>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default App;
+
+7. inisialisasi axios untuk React Crud HTTP Client di http-common.js
+
+install axios terlebih dahulu
+npm i axios
+
+import axios from "axios";
+export default axios.create({
+    baseURL: "http://localhost:8080/api",
+    headers: {
+        "Content-type": "application/json"
+    }
+});
+
+8. buat object data service menggunakan axios dikirimkan ke http request di services/tutorial.service.js
+import http from "../http-common";
+
+class TutorialDataService {
+    getAll() {
+        return http.get("/tutorials");
+    }
+    get(id) {
+        return http.get(`/tutorials/${id}`);
+    }
+    create(data) {
+        return http.post("/tutorials", data);
+    }
+    update(id, data) {
+        return http.put(`/tutorials/${id}`, data);
+    }
+    delete(id) {
+        return http.delete(`/tutorials/${id}`);
+    }
+    deleteAll() {
+        return http.delete("/tutorials");
+    }
+    findByTitle(title) {
+        return http.get(`/tutorials?title=${title}`);
+    }
+}
+
+export default new TutorialDataService();
+
+9. buar react component page menggunakan hooks untuk consume api 
+
+Methods	Urls			Actions
+POST	/api/tutorials		create new Tutorial
+GET	/api/tutorials		retrieve all Tutorials
+GET	/api/tutorials/:id	retrieve a Tutorial by :id
+PUT	/api/tutorials/:id	update a Tutorial by :id
+DELETE	/api/tutorials/:id	delete a Tutorial by :id
+DELETE	/api/tutorials		delete all Tutorials
+
+10. buat page default di semua file components dengan mengetikakan rafce contoh seperti dibawah ini
+
+A. add-tutorial.component.js
+import React from 'react';
+
+const AddTutorial = () => {
+    return (
+        <div>
+            <h1>
+                Add Tutorial
+            </h1>
+        </div>
+    )
+}
+
+export default AddTutorial;
+
+
+B. tutorial-list.component.js
+import React from 'react';
+
+const TutorialList = () => {
+    return (
+        <div>
+            <h1>
+                TutorialList
+            </h1>
+        </div>
+    )
+}
+
+export default TutorialList;
+
+C. tutorial.component.js
+import React from 'react';
+
+const Tutorial = () => {
+    return (
+        <div>
+            <h1>
+                Tutorial
+            </h1>
+        </div>
+    )
+}
+
+export default Tutorial;
+
+11. panggin 3 component yang tadi dibuat di app.js
+<div className="container mt-3">
+          <Switch>
+            <Route exact path={["/", "/tutorials"]} component={TutorialList} />
+            <Route exact path="/add" component={AddTutorial} />
+            <Route path="/tutorials/:id" component={Tutorial} />
+          </Switch>
+        </div>
+
+12. buat react commponent react add object di components/add-tutorial.component.js
+
+import React, { useState } from 'react';
+import tutorialService from '../services/tutorial.service';
+
+const AddTutorial = () => {
+  const initialTutorialState = {
+    id: null,
+    title: "",
+    description: "",
+    published: false
+  };
+
+  const [tutorial, setTutorial] = useState(initialTutorialState);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleInputChange = event => {
+    const { name, value } = event.target;
+    setTutorial({ ...tutorial, [name]: value });
+  };
+
+  const saveTutorial = () => {
+    var data = {
+      title: tutorial.title,
+      description: tutorial.description
+    };
+
+    tutorialService.create(data)
+      .then(response => {
+        setTutorial({
+          id: response.data.id,
+          title: response.data.title,
+          description: response.data.description,
+          published: response.data.published
+        });
+        setSubmitted(true);
+        console.log(response.data);
+      })
+      .catch(e => {
+        console.log(e);
+      });
+  };
+
+  const newTutorial = () => {
+    setTutorial(initialTutorialState);
+    setSubmitted(false);
+  };
+
+  return (
+    <div className="submit-form">
+      {submitted ? (
+        <div>
+          <h4>You submitted successfully</h4>
+          <button className="btn btn-success" onClick={newTutorial}>
+            Add
+          </button>
+        </div>
+      ) : (
+        <div>
+          <div className="form-group">
+            <label htmlFor="title">Title</label>
+            <input
+              type="text"
+              className="form-control"
+              id="title"
+              required
+              value={tutorial.title}
+              onChange={handleInputChange}
+              name="title"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="description">Description</label>
+            <input
+              type="text"
+              className="form-control"
+              id="description"
+              required
+              value={tutorial.description}
+              onChange={handleInputChange}
+              name="description"
+            />
+          </div>
+
+          <button onClick={saveTutorial} className="btn btn-success">
+            Submit
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AddTutorial;
+
+13. buat list object componet dari database di components/tutorial-list.component.js
+yang terdiri dari search bar, array dari semua database dan di page ini menggunakan 3 function
+dari tutorial.service.js yaitu getAll() removeAll() findByTitle()
+
+A. Buat beberapa function
+import React, { useEffect, useState } from 'react';
+import TutorialDataService from "../services/tutorial.service"
+import { Link } from "react-router-dom";
+
+const TutorialList = () => {
+    const [tutorials, setTutorials] = useState([]);
+    const [currentTutorial, setCurrentTutorial] = useState(null);
+    const [currentIndex, setCurrentIndex] = useState(-1);
+    const [searchTitle, setSearchTitle] = useState("");
+
+    useEffect(() => {
+        retrieveTutorials();
+    }, []);
+
+    const onChangeSearchTitle = e => {
+        const searchTitle = e.target.value;
+        setSearchTitle(searchTitle);
+    }
+
+    const retrieveTutorials = () => {
+        TutorialDataService.getAll()
+            .then(response => {
+                setTutorial(response.data);
+                console.log(response.data);
+            })
+            .catch(e => {
+                console.log(e);
+            });
+    };
+
+    const refreshList = () => {
+        retrieveTutorials();
+        setActiveTutorial(null);
+        setCurrentIndex(-1);
+    };
+
+    const setActiveTutorial = (tutorial, index) => {
+        setCurrentTutorial(tutorial);
+        setCurrentIndex(index);
+    }
+
+    const removeAllTutorials = () => {
+        TutorialDataService.deleteAll()
+            .then(response => {
+                console.log(response.data);
+                refreshList();
+            })
+            .catch(e => {
+                console.log(e);
+            });
+    };
+
+    const findByTitle = () => {
+        TutorialDataService.findByTitle(searchTitle)
+            .then(response => {
+                setTutorials(response.data);
+                console.log(response.data);
+            })
+            .catch(e => {
+                console.log(e);
+            });
+    };
+
+    return (
+        <div>
+            <h1>
+                TutorialList
+            </h1>
+        </div>
+    )
+}
+
+export default TutorialList;
+
+B. Buat design beberapa component web
+return (
+        <div className="list row">
+            <div className="col-md-8">
+                <div className="input-group mb-3">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search By Title"
+                        value={searchTitle}
+                        onChange={onChangeSearchTitle}
+                    />
+                    <div className="input-group-append">
+                        <button
+                            className="btn btn-outline-secondary"
+                            type="button"
+                            onClick={findByTitle}
+                        >
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="col-md-6">
+                <h4>Tutorial List</h4>
+
+                <ul className="list-group">
+                    {tutorials &&
+                        tutorials.map((tutorial, index) => (
+                            <li
+                                className={
+                                    "list-group-item " + (index === currentIndex ? "active" : "")
+                                }
+                                onClick={() => setActiveTutorial(tutorial, index)}
+                                key={index}
+                            >
+                                {tutorial.title}
+                            </li>
+                        ))}
+                </ul>
+
+                <button
+                    className="m-3 btn btn-sm btn-danger"
+                    onClick={removeAllTutorials}
+                >
+                    Rmove All
+                </button>
+            </div>
+
+            <div className="col-md-6">
+                {currentTutorial ? (
+                    <div>
+                        <h4>Tutorial</h4>
+                        <div>
+                            <label>
+                                <strong>Title :</strong>
+                            </label>{" "}
+                            {currentTutorial.title}
+                        </div>
+                        <div>
+                            <label>
+                                <strong>Description :</strong>
+                            </label>{" "}
+                            {currentTutorial.description}
+                        </div>
+                        <div>
+                            <label>
+                                <strong>Status :</strong>
+                            </label>{" "}
+                            {currentTutorial.published ? "published" : "pending"}
+                        </div>
+                        <Link
+                            to={"/tutorials/" + currentTutorial.id}
+                            className="badge bg-waning"
+                        >
+                            Edit
+                        </Link>
+                    </div>
+                ) : (
+                    <div>
+                        <br />
+                        <p>Please click on a Tutorials</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+14. buat object detail component untuk mendapatkan data, update dan delete data, 
+menggunkan 3 function dari tutorial.service.js yaitu get() update() remove()
+
+A. Buat Function
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import TutorialDataService from '../services/tutorial.service';
+
+const Tutorial = () => {
+    const { id } = useParams();
+    //let navigate = useNavigate();
+
+    const initialTutorialState = {
+        id: null,
+        title: "",
+        description: "",
+        published: false,
+    };
+
+    const [currentTutorial, setCurrentTutorial] = useState(initialTutorialState);
+    const [message, setMessage] = useState("");
+
+    const getTutorial = id => {
+        TutorialDataService.get(id)
+            .then(response => {
+                setCurrentTutorial(response.data);
+                console.log(response.data);
+            })
+            .catch(e => {
+                console.log(e);
+            });
+    };
+
+    useEffect(() => {
+        if (id)
+            getTutorial(id);
+    }, [id]);
+
+    const handleInputChange = event => {
+        const { name, value } = event.target;
+        setCurrentTutorial({ ...currentTutorial, [name]: value });
+    };
+
+    const updatePublished = status => {
+        var data = {
+            id: currentTutorial.id,
+            title: currentTutorial.title,
+            description: currentTutorial.description,
+            published: status
+        };
+
+        TutorialDataService.update(currentTutorial.id, data)
+        .then(response => {
+            setCurrentTutorial({ ...currentTutorial, published: status });
+            console.log(response.data)
+        })
+        .catch(e => {
+            console.log(e);
+        });
+    };
+
+    const updateTutorial = () => {
+        TutorialDataService.update(currentTutorial.id, currentTutorial)
+        .then(response => {
+            console.log(response.data);
+            setMessage("The tutorial was updated successfully !!!");
+        })
+        .catch(e => {
+            console.log(e);
+        });
+    };
+
+    const deleteTutorial = () => {
+        TutorialDataService.delete(currentTutorial.id)
+        .then(response => {
+            console.log(response.data);
+            //navigate("/tutorials");
+        })
+        .catch(e => {
+            console.log(e);
+        });
+    };
+
+    return (
+        <div>
+            <h1>
+                Tutorial
+            </h1>
+        </div>
+    )
+}
+
+export default Tutorial;
+
+B. Desain page
+return (
+        <div>
+            {currentTutorial ? (
+                <div className="edit-form">
+                    <h4>Tutorial</h4>
+                    <form>
+                        <div className="form-group">
+                            <label htmlFor="title">Title</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="title"
+                                name="title"
+                                value={currentTutorial.title}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="description">Description</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="description"
+                                name="description"
+                                value={currentTutorial.description}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>
+                                <strong>Status : </strong>
+                            </label>
+                            {currentTutorial.published ? "Published" : "Pending"}
+                        </div>
+                    </form>
+
+                    {currentTutorial.published ? (
+                        <button
+                            className="badge bg-primary m-2"
+                            onClick={() => updatePublished(false)}
+                        >
+                            UnPublish
+                        </button>
+                    ) : (
+                        <button
+                            className="badge bg-primary mr-2"
+                            onClick={() => updatePublished(true)}
+                        >
+                            Published
+                        </button>
+                    )}
+
+                    <button className="badge bg-danger mr-2" onClick={deleteTutorial}>
+                        Delete
+                    </button>
+
+                    <button
+                        type="submit"
+                        className="badge bg-success"
+                        onClick={updateTutorial}
+                    >
+                        Update
+                    </button>
+                    <p> {message} </p>
+                </div>
+            ) : (
+                <div>
+                    <br />
+                    <p>Please click a Tutorial ...</p>
+                </div>
+            )}
+        </div>
+    );
+
+15. tambahkan css style react components
+.list {
+    text-align: left;
+    max-width: 750px;
+    margin: auto;
+}
+
+.submit-from {
+    max-width: 300px;
+    margin: auto;
+}
+
+.edit-form {
+    max-width: 300px;
+    margin: auto;
+}
+
+16. dan panggil file css nya di app.js
+import "./app.css"

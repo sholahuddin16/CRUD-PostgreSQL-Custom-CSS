@@ -1,0 +1,343 @@
+Crud PostgreSQL by Bezkode
+
+1. install express
+npm init
+
+2. instal package
+npm install express sequelize pg pg-hstore cors --save
+
+3. Buat struktur folder seperti ini
+
+A. config
+db.config.js
+
+B. controllers
+tutorial.contoroller.js
+
+c. models
+index.js
+tutorial.model.js
+
+d. routes
+tutorial.routes.js
+
+4. Setup Express web server 
+Buat new file server.js
+const express = require("express");
+const bodyParser =require("body-parser");
+const cors = require("cors");
+const app = express();
+
+var corsOptions = {
+    origin: "http://localhost:3000"
+};
+
+app.use(cors(corsOptions));
+
+// parse requests of content-type - application/json
+app.use(express.json());
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+
+// simple route
+app.get("/", (req, res) => {
+    res.json({ message: "Welcome Traine" });
+});
+
+// set port, listen for requests
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+});
+
+5. Configure PostgreSQL database & Sequelize
+ketikan code di file config/db.config.js
+module.exports = {
+    HOST: "localhost",
+    USER: "postgres",
+    PASSWORD: "kincir1545",
+    DB: "testdb",
+    dialect: "postgres",
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+};
+
+6. Initialize Sequelize di models/index.js
+const dbConfig = require("../config/db.config.js");
+const Sequelize = require("sequelize");
+const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
+    host: dbConfig.HOST,
+    dialect: dbConfig.dialect,
+    operatorAliases: false,
+    pool: {
+        max: dbConfig.pool.max,
+        min: dbConfig.pool.min,
+        acquire: dbConfig.pool.acquire,
+        idle: dbConfig.pool.idle
+    }
+});
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+db.tutorials = require("./tutorial.model.js")(sequelize, Sequelize);
+module.exports = db;
+
+7. panggil sync() method in server.js
+const db = require("./models");
+db.sequelize.sync()
+    .then(() =>{
+        console.log("Synced db.");
+    })
+    .catch((err) => {
+        console.log("Failed to sync db: " + err.message);
+    });
+
+8. buat models table di tutorial.model.js
+const { sequelize, Sequelize } = require(".");
+
+module.exports = (sequelize, Sequelize) => {
+    const Tutorial = sequelize.define("tutorial", {
+        title: {
+            type: Sequelize.STRING
+        },
+        description: {
+            type: Sequelize.STRING
+        },
+        published: {
+            type: Sequelize.BOOLEAN
+        }
+    });
+    return Tutorial;
+};
+
+9. buat function crud di contollers/tutorial.controller.js
+A. create
+const db = require("../models");
+const Tutorial = db.tutorials;
+const Op = db.Sequelize.Op;
+
+//Create and Save a new Tutoral
+exports.create = (req, res) => {
+
+};
+
+B. findAll
+//Retrieve all tutorial from database
+exports.findAll = (req, res) => {
+
+};
+
+C. findOne
+//Find a single tutorial from the database
+exports.findOne = (req, res) => {
+
+};
+
+D. update
+//Update a tutorial by the id in the request
+exports.update = (req, res) => {
+
+};
+
+E. delete
+//Delete a tutorial with the specified id in the request
+exports.delete = (req, res) => {
+
+};
+
+F. deleteAll
+//Delete all tutorials from the database
+exports.deleteAll = (req, res) => {
+
+};
+
+G. findAllPublished
+//Find all published tutorials
+exports.findAllPublished = (req, res) => {
+
+};
+
+10. buat object pada function crud di /controllers/tutorial.controller.js
+A. create
+//Create and Save a new Tutoral
+exports.create = (req, res) => {
+    //Validate request
+    if (!req.body.title) {
+        res.status(400).send({
+            message: "Content tidak boleh kosong !!!"
+        });
+        return;
+    };
+
+    //Create a tutorial
+    const tutorial = {
+        title: req.body.title,
+        description: req.body.description,
+        published: req.body.published ? req.body.published : false
+    };
+
+    //Save tutorial in database
+    Tutorial.create(tutorial)
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: err.message || "Some error occurred while creating the Tutorial"
+            });
+        });
+};
+
+B. findAll
+//Retrieve all tutorial from database
+exports.findAll = (req, res) => {
+    const title = req.query.title;
+    var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
+    Tutorial.findAll({ where: condition })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: err.message || "Some error occurred while retrieving tutorials"
+            });
+        });
+};
+
+C. findOne
+//Find a single tutorial from the database
+exports.findOne = (req, res) => {
+    const id = req.params.id;
+    Tutorial.findByPk(id)
+        .then(data => {
+            if (data) {
+                res.send(data);
+            } else {
+                res.status(404).send({
+                    message: `Tidak bisa dicari tutorial dengan id=${id}`
+                });
+            }
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: "Error retrieving tutorial with id=" + id
+            });
+        });
+};
+
+D. update
+//Update a tutorial by the id in the request
+exports.update = (req, res) => {
+    const id = req.params.id;
+    Tutorial.update(req.body, {
+        where: { id: id }
+    })
+        .then(num => {
+            if (num == 1) {
+                res.send({
+                    message: "Tutorial berhasil diupdate"
+                });
+            } else {
+                res.send({
+                    message: `Cannot update tutorial with id=${id}. Maybe tutorial was not found or req.body is empty!`
+                });
+            }
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: "Error Updating tutorial with id=" + id
+            });
+        });
+};
+
+E. delete
+//Delete a tutorial with the specified id in the request
+exports.delete = (req, res) => {
+    const id = req.params.id;
+    Tutorial.destroy({
+        where: { id: id }
+    })
+        .then(num => {
+            if (num == 1) {
+                res.send({
+                    message: "Berhasil Menghapus Tutorial!"
+                });
+            } else {
+                res.send({
+                    message: `Cannot delete tutorial with id=${id}. Maybe Tutorial was not found!`
+                });
+            }
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: "Could not delete tutorial with id=" + id
+            });
+        });
+};
+
+F. deleteAll
+//Delete all tutorials from the database
+exports.deleteAll = (req, res) => {
+    Tutorial.destroy({
+        where: {},
+        truncate: false
+    })
+        .then(nums => {
+            res.send({ message: `${nums} Tutorial were deleted successfully!` });
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: err.message || "Some error occurred while removing all tutorials."
+            });
+        });
+};
+
+G. findAllPublished
+//Find all published tutorials
+exports.findAllPublished = (req, res) => {
+    Tutorial.findAll({ where: { published: true } })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: err.message || "Some error occurred while retrieving tutorials."
+            });
+        });
+};
+
+11. Define Routes Endpoint using HTTP request (GET, POST, PUT, DELETE) di /routes/tutorial.routes.js
+module.exports = app => {
+    const tutorials = require("../controllers/tutorial.controller.js");
+    var router = require("express").Router();
+
+    //Create a new tutorial
+    router.post("/", tutorials.create);
+    
+    //Retrieve all tutorials
+    router.get("/", tutorials.findAll);
+
+    //Retrieve all published tutorials
+    router.get("/published", tutorials.findAllPublished);
+
+    //Retrieve a single tutorial with id
+    router.get("/:id", tutorials.findOne);
+
+    //Update a tutorial with id
+    router.put("/:id", tutorials.update);
+
+    //Delete tutorial with id
+    router.delete("/:id", tutorials.delete);
+    
+    //Delete all tutorial
+    router.delete("/", tutorials.deleteAll);
+    app.use('/api/tutorials', router);
+};
+
+12. import routes ke server.js
+require("./app/routes/turorial.routes")(app);
